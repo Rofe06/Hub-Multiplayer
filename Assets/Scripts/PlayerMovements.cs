@@ -10,6 +10,9 @@ public class PlayerMovements : NetworkBehaviour
     {
         if (IsOwner)
         {
+            GetComponent<Renderer>().material.color = Color.cadetBlue;
+        } else if (!IsOwner)
+        {
             GetComponent<Renderer>().material.color = Color.red;
         }
     }
