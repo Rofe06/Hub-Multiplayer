@@ -10,8 +10,7 @@ public class PlayerController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Récupère la caméra ENFANT du prefab (jamais la Main Camera de la scène)
-        playerCamera = GetComponentInChildren<Camera>(true); // true = inclut les inactifs
+        playerCamera = GetComponentInChildren<Camera>(true);
 
         if (playerCamera == null)
         {
@@ -20,7 +19,6 @@ public class PlayerController : NetworkBehaviour
         }
 
         bool isLocal = IsOwner;
-
         playerCamera.enabled = isLocal;
 
         if (playerCamera.TryGetComponent<AudioListener>(out var al))
@@ -33,7 +31,7 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
-            enabled = false; // Désactive l'Update pour les joueurs distants
+            enabled = false;
         }
     }
 
