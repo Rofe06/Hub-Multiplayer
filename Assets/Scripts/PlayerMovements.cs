@@ -10,19 +10,18 @@ public class PlayerMovements : NetworkBehaviour
 
     [Header("Saut & Gravité")]
     public float jumpHeight = 1.4f;
-    public float gravity = -18f;
+    public float gravity = -100f;
+    public float fallMultiplier = 42f;
 
     [Header("Détection du sol")]
     public Transform groundCheck;
     public float groundDistance = 0.3f;
     public LayerMask groundMask;
 
-    // ── Privés ───────────────────────────────────────────────────────────────
     private CharacterController _cc;
     private Vector3 _velocity;
     private bool _isGrounded;
 
-    // ── Couleur réseau ────────────────────────────────────────────────────────
     private readonly NetworkVariable<Color> _playerColor =
         new NetworkVariable<Color>(
             Color.white,
@@ -72,6 +71,8 @@ public class PlayerMovements : NetworkBehaviour
         int mask = groundMask.value != 0 ? (int)groundMask : ~(1 << 2);
         _isGrounded = Physics.CheckSphere(checkPos, groundDistance, mask);
 
+        Debug.Log($"isGrounded: {_isGrounded} | velocity.y: {_velocity.y:F2} | checkPos.y: {checkPos.y:F2}");
+
         if (_isGrounded && _velocity.y < 0f)
             _velocity.y = -2f;
     }
@@ -90,16 +91,21 @@ public class PlayerMovements : NetworkBehaviour
 
     private void HandleJump()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
-            _velocity.y = Mathf.Sqrt(2f * Mathf.Abs(gravity) * jumpHeight);
+        // _velocity.y > 0 = on est en train de monter = on vient de sauter
+        // Cette condition est le vrai verrou anti-saut infini
+        bool canJump = _isGrounded && _velocity.y <= 0f;
 
-        if (Input.GetKeyDown(KeyCode.Space) && !_isGrounded)
-            Debug.LogWarning("[PlayerMovements] Saut ignoré : pas au sol.");
+        if (Input.GetKeyDown(KeyCode.Space) && canJump)
+            _velocity.y = Mathf.Sqrt(2f * Mathf.Abs(gravity) * jumpHeight);
     }
 
     private void ApplyGravity()
     {
-        _velocity.y += gravity * Time.deltaTime;
+        float currentGravity = _velocity.y < 0f
+            ? gravity * fallMultiplier
+            : gravity;
+
+        _velocity.y += currentGravity * Time.deltaTime;
         _cc.Move(_velocity * Time.deltaTime);
     }
 
