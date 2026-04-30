@@ -9,9 +9,9 @@ public class PlayerMovements : NetworkBehaviour
     public float sprintSpeed = 10f;
 
     [Header("Saut & Gravité")]
-    public float jumpHeight = 1.4f;
-    public float gravity = -100f;
-    public float fallMultiplier = 42f;
+    public float jumpHeight = 2f;
+    public float gravity = -50f;
+    public float fallMultiplier = 10f;
 
     [Header("Détection du sol")]
     public Transform groundCheck;
@@ -24,7 +24,7 @@ public class PlayerMovements : NetworkBehaviour
 
     private readonly NetworkVariable<Color> _playerColor =
         new NetworkVariable<Color>(
-            Color.white,
+            Color.red,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
         );
@@ -35,7 +35,9 @@ public class PlayerMovements : NetworkBehaviour
         _playerColor.OnValueChanged += OnColorChanged;
 
         if (IsServer)
-            _playerColor.Value = IsOwner ? Color.cyan : Color.red;
+            _playerColor.Value = Color.red;
+        
+        OnColorChanged(_playerColor.Value, _playerColor.Value);
 
         if (!IsOwner)
             enabled = false;
@@ -101,9 +103,7 @@ public class PlayerMovements : NetworkBehaviour
 
     private void ApplyGravity()
     {
-        float currentGravity = _velocity.y < 0f
-            ? gravity * fallMultiplier
-            : gravity;
+        float currentGravity = _velocity.y < 0f ? gravity * fallMultiplier : gravity;
 
         _velocity.y += currentGravity * Time.deltaTime;
         _cc.Move(_velocity * Time.deltaTime);
