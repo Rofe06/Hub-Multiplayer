@@ -184,7 +184,7 @@ public class NetworkButtonUI : MonoBehaviour
                 GUIContent.none, _dividerStyle);
 
         // ── boutons ──────────────────────────────────────────────────────
-        string[] labels = { "⬡  HOST A GAME", "⬡  JOIN A GAME", "⬡  DEDICATED SERVER" };
+        string[] labels = { "⬡  HOST A GAME", "⬡  JOIN A GAME" };
         float btnX = px + (PanelW - BtnW) * 0.5f;
 
         for (int i = 0; i < labels.Length; i++)
@@ -210,11 +210,6 @@ public class NetworkButtonUI : MonoBehaviour
                     case 1: // CLIENT — se connecte à l'IP saisie
                         transport.SetConnectionData(_ipAddress.Trim(), Port);
                         NetworkManager.Singleton.StartClient();
-                        break;
-
-                    case 2: // SERVEUR DÉDIÉ
-                        transport.SetConnectionData("0.0.0.0", Port);
-                        NetworkManager.Singleton.StartServer();
                         break;
                 }
             }
