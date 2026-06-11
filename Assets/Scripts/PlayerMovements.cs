@@ -71,8 +71,6 @@ public class PlayerMovements : NetworkBehaviour
         int mask = groundMask.value != 0 ? (int)groundMask : ~(1 << 2);
         _isGrounded = Physics.CheckSphere(checkPos, groundDistance, mask);
 
-        Debug.Log($"isGrounded: {_isGrounded} | velocity.y: {_velocity.y:F2} | checkPos.y: {checkPos.y:F2}");
-
         if (_isGrounded && _velocity.y < 0f)
             _velocity.y = -2f;
     }
