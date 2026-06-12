@@ -5,16 +5,14 @@ public class Crosshair : MonoBehaviour
 {
     [Header("Apparence")]
     public Color crosshairColor = Color.white;
-    public float size = 20f;   // taille des branches
-    public float thickness = 2f;    // épaisseur des branches
-    public float gap = 5f;    // espace au centre
+    public float size = 20f;
+    public float thickness = 2f;
+    public float gap = 5f;
 
-    // Les 4 branches du crosshair
     private Image _top, _bottom, _left, _right, _dot;
 
     void Awake()
     {
-        // Crée les 4 branches + point central
         _top = CreateBranch("Top");
         _bottom = CreateBranch("Bottom");
         _left = CreateBranch("Left");
@@ -33,17 +31,16 @@ public class Crosshair : MonoBehaviour
 
     private void UpdateCrosshair()
     {
-        // Couleur
-        _top.color = _bottom.color = _left.color = _right.color = crosshairColor;
-        _dot.color = crosshairColor;
+        // Vérifie que les branches existent avant de les modifier
+        if (_top == null || _bottom == null || _left == null || _right == null || _dot == null)
+            return;
 
-        // Taille et position de chaque branche
+        _top.color = _bottom.color = _left.color = _right.color = _dot.color = crosshairColor;
+
         SetBranch(_top, new Vector2(thickness, size), new Vector2(0, gap + size * 0.5f));
         SetBranch(_bottom, new Vector2(thickness, size), new Vector2(0, -gap - size * 0.5f));
         SetBranch(_left, new Vector2(size, thickness), new Vector2(-gap - size * 0.5f, 0));
         SetBranch(_right, new Vector2(size, thickness), new Vector2(gap + size * 0.5f, 0));
-
-        // Point central (optionnel)
         SetBranch(_dot, new Vector2(thickness, thickness), Vector2.zero);
     }
 
@@ -57,7 +54,6 @@ public class Crosshair : MonoBehaviour
         rt.anchoredPosition = anchoredPos;
     }
 
-    // Appelable depuis d'autres scripts pour animer le crosshair (ex: recul)
     public void Pulse(float expandAmount = 5f)
     {
         gap += expandAmount;
@@ -72,6 +68,10 @@ public class Crosshair : MonoBehaviour
         UpdateCrosshair();
     }
 
-    // Permet de modifier les valeurs en temps réel dans l'Inspector
-    void OnValidate() => UpdateCrosshair();
+    // OnValidate ne tourne que dans l'éditeur — on ignore si les branches ne sont pas créées
+    void OnValidate()
+    {
+        if (_top != null)
+            UpdateCrosshair();
+    }
 }
