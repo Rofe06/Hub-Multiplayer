@@ -25,12 +25,9 @@ public class Health : NetworkBehaviour
     public event System.Action<float, float> OnHealthChanged;
     public event System.Action OnDeath;
 
-    // ── Composants ───────────────────────────────────────────────────────────
     private CharacterController _cc;
     private PlayerMovements _movements;
     private PlayerController _controller;
-
-    // ────────────────────────────────────────────────────────────────────────
 
     public override void OnNetworkSpawn()
     {
@@ -51,16 +48,13 @@ public class Health : NetworkBehaviour
         _isDying.OnValueChanged -= HandleDyingChanged;
     }
 
-    // ── Changement de HP ─────────────────────────────────────────────────────
     private void HandleHealthChanged(float previous, float current)
     {
         OnHealthChanged?.Invoke(current, maxHealth);
-
         if (current <= 0f)
             OnDeath?.Invoke();
     }
 
-    // ── Changement d'état mourant ─────────────────────────────────────────────
     private void HandleDyingChanged(bool previous, bool current)
     {
         if (current)
@@ -69,14 +63,11 @@ public class Health : NetworkBehaviour
             ApplyAliveState();
     }
 
-    // ── État mort : désactive les contrôles, laisse tomber ────────────────────
     private void ApplyDeathState()
     {
-        // Désactive les scripts de mouvement/tir
         if (_movements != null) _movements.enabled = false;
         if (_controller != null) _controller.enabled = false;
 
-        // Fait tomber le joueur sur le côté
         if (IsOwner)
         {
             transform.rotation = Quaternion.Euler(90f, transform.eulerAngles.y, 0f);
@@ -85,13 +76,11 @@ public class Health : NetworkBehaviour
         }
     }
 
-    // ── État vivant : réactive les contrôles ──────────────────────────────────
     private void ApplyAliveState()
     {
         if (_movements != null) _movements.enabled = true;
         if (_controller != null) _controller.enabled = true;
 
-        // Remet le joueur debout
         transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
         if (IsOwner)
@@ -101,7 +90,6 @@ public class Health : NetworkBehaviour
         }
     }
 
-    // ── TakeDamage (appelé par le serveur) ───────────────────────────────────
     public void TakeDamage(float amount)
     {
         if (!IsServer || IsDead) return;
@@ -112,27 +100,40 @@ public class Health : NetworkBehaviour
             StartCoroutine(DeathAndRespawn());
     }
 
-    // ── Séquence mort → respawn ───────────────────────────────────────────────
     private System.Collections.IEnumerator DeathAndRespawn()
     {
         _isDying.Value = true;
 
         yield return new WaitForSeconds(respawnDelay);
 
-        // Téléporte au spawn
+        Vector3 spawnPos = GetSpawnPoint();
+
+        // Téléporte côté serveur
         if (_cc != null) _cc.enabled = false;
-        transform.position = GetSpawnPoint();
+        transform.position = spawnPos;
         if (_cc != null) _cc.enabled = true;
 
-        // Reset
+        // Téléporte côté client owner via ClientRpc
+        TeleportClientRpc(spawnPos);
+
         _currentHealth.Value = maxHealth;
         _isDying.Value = false;
     }
 
-    // ── Point de spawn ────────────────────────────────────────────────────────
+    // ── Téléporte le joueur côté client ──────────────────────────────────────
+    [ClientRpc]
+    private void TeleportClientRpc(Vector3 position)
+    {
+        // Ne s'applique qu'au owner (le joueur concerné)
+        if (!IsOwner) return;
+
+        if (_cc != null) _cc.enabled = false;
+        transform.position = position;
+        if (_cc != null) _cc.enabled = true;
+    }
+
     private Vector3 GetSpawnPoint()
     {
-        // Cherche un objet "SpawnPoint" dans la scène, sinon retourne Vector3.zero
         GameObject sp = GameObject.Find("SpawnPoint");
         return sp != null ? sp.transform.position : new Vector3(0f, 1f, 0f);
     }
