@@ -6,36 +6,22 @@ using Unity.Netcode;
 public class HUD : MonoBehaviour
 {
     [Header("Vie")]
-    public Image healthBarFill;   // Image remplie (type Filled)
-    public TMP_Text healthText;    // "75 / 100"
+    public Image healthBarFill;
+    public TMP_Text healthText;
 
     [Header("Feedback mort")]
-    public GameObject deathPanel;  // Panel rouge "VOUS ÊTES MORT"
+    public GameObject deathPanel;
 
     private Health _health;
+    private bool _initialized = false;
 
-    void Start()
+    void Update()
     {
-        // Attend que le NetworkManager spawne le joueur local
-        if (NetworkManager.Singleton != null)
-            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-    }
+        // Cherche le joueur local à chaque frame jusqu'à ce qu'il soit trouvé
+        if (_initialized) return;
+        if (NetworkManager.Singleton == null) return;
+        if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost) return;
 
-    private void OnDestroy()
-    {
-        if (NetworkManager.Singleton != null)
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-
-        if (_health != null)
-        {
-            _health.OnHealthChanged -= UpdateHealth;
-            _health.OnDeath -= ShowDeathPanel;
-        }
-    }
-
-    private void OnClientConnected(ulong clientId)
-    {
-        // Cherche le joueur local parmi les objets spawnés
         foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
             if (netObj.IsOwner && netObj.TryGetComponent<Health>(out var health))
@@ -44,10 +30,19 @@ public class HUD : MonoBehaviour
                 _health.OnHealthChanged += UpdateHealth;
                 _health.OnDeath += ShowDeathPanel;
 
-                // Init affichage
                 UpdateHealth(_health.CurrentHealth, _health.maxHealth);
+                _initialized = true;
                 break;
             }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (_health != null)
+        {
+            _health.OnHealthChanged -= UpdateHealth;
+            _health.OnDeath -= ShowDeathPanel;
         }
     }
 
@@ -59,7 +54,6 @@ public class HUD : MonoBehaviour
         if (healthText != null)
             healthText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(max)}";
 
-        // Cache le panel de mort si on respawn
         if (current > 0f && deathPanel != null)
             deathPanel.SetActive(false);
     }
