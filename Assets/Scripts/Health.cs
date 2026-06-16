@@ -57,10 +57,8 @@ public class Health : NetworkBehaviour
 
     private void HandleDyingChanged(bool previous, bool current)
     {
-        if (current)
-            ApplyDeathState();
-        else
-            ApplyAliveState();
+        if (current) ApplyDeathState();
+        else ApplyAliveState();
     }
 
     private void ApplyDeathState()
@@ -90,41 +88,56 @@ public class Health : NetworkBehaviour
         }
     }
 
-    public void TakeDamage(float amount)
+    // killerId = OwnerClientId du tireur
+    public void TakeDamage(float amount, ulong killerId = ulong.MaxValue)
     {
         if (!IsServer || IsDead) return;
 
         _currentHealth.Value = Mathf.Max(0f, _currentHealth.Value - amount);
 
         if (_currentHealth.Value <= 0f)
-            StartCoroutine(DeathAndRespawn());
+            StartCoroutine(DeathAndRespawn(killerId));
     }
 
-    private System.Collections.IEnumerator DeathAndRespawn()
+    private System.Collections.IEnumerator DeathAndRespawn(ulong killerId)
     {
         _isDying.Value = true;
+
+        // Ajoute une mort au joueur tué
+        if (TryGetComponent<PlayerStats>(out var myStats))
+            myStats.AddDeath();
+
+        // Ajoute un kill au tireur
+        if (killerId != ulong.MaxValue)
+        {
+            foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
+            {
+                if (netObj.OwnerClientId == killerId &&
+                    netObj.TryGetComponent<PlayerStats>(out var killerStats))
+                {
+                    killerStats.AddKill();
+                    break;
+                }
+            }
+        }
 
         yield return new WaitForSeconds(respawnDelay);
 
         Vector3 spawnPos = GetSpawnPoint();
 
-        // Téléporte côté serveur
         if (_cc != null) _cc.enabled = false;
         transform.position = spawnPos;
         if (_cc != null) _cc.enabled = true;
 
-        // Téléporte côté client owner via ClientRpc
         TeleportClientRpc(spawnPos);
 
         _currentHealth.Value = maxHealth;
         _isDying.Value = false;
     }
 
-    // ── Téléporte le joueur côté client ──────────────────────────────────────
     [ClientRpc]
     private void TeleportClientRpc(Vector3 position)
     {
-        // Ne s'applique qu'au owner (le joueur concerné)
         if (!IsOwner) return;
 
         if (_cc != null) _cc.enabled = false;

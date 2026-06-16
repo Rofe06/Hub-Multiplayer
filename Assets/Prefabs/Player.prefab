@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 80865577648114954}
   - component: {fileID: 4484905249088740550}
   - component: {fileID: 4722096610954112412}
+  - component: {fileID: 6481028185697171370}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -154,6 +155,7 @@ Transform:
   - {fileID: 3375392989720726252}
   - {fileID: 3564554241434348473}
   - {fileID: 5557304986751195387}
+  - {fileID: 4648080432469172262}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6443821062897954084
@@ -248,7 +250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2981073272
+  GlobalObjectIdHash: 1330111932
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -416,6 +418,93 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Health
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
+  respawnDelay: 3
+--- !u!114 &6481028185697171370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3070416039993043783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aba3ee3f481675c418f6dda205dd4caa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  ShowTopMostFoldoutHeaderGroup: 1
+  Kills:
+    m_InternalValue: 0
+  Deaths:
+    m_InternalValue: 0
+  PlayerName:
+    m_InternalValue:
+      utf8LengthInBytes: 6
+      bytes:
+        offset0000:
+          byte0000: 80
+          byte0001: 108
+          byte0002: 97
+          byte0003: 121
+          byte0004: 101
+          byte0005: 114
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        offset0016:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        offset0032:
+          byte0000: 0
+          byte0001: 0
+          byte0002: 0
+          byte0003: 0
+          byte0004: 0
+          byte0005: 0
+          byte0006: 0
+          byte0007: 0
+          byte0008: 0
+          byte0009: 0
+          byte0010: 0
+          byte0011: 0
+          byte0012: 0
+          byte0013: 0
+          byte0014: 0
+          byte0015: 0
+        byte0048: 0
+        byte0049: 0
+        byte0050: 0
+        byte0051: 0
+        byte0052: 0
+        byte0053: 0
+        byte0054: 0
+        byte0055: 0
+        byte0056: 0
+        byte0057: 0
+        byte0058: 0
+        byte0059: 0
+        byte0060: 0
+        byte0061: 0
 --- !u!1 &4272821579708530029
 GameObject:
   m_ObjectHideFlags: 0

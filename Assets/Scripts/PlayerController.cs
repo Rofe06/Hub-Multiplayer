@@ -101,19 +101,11 @@ public class PlayerController : NetworkBehaviour
     {
         if (targetNetworkObjectId == ulong.MaxValue) return;
 
-        // Retrouve l'objet via son NetworkObjectId — fiable même avec plusieurs clones
         if (NetworkManager.Singleton.SpawnManager.SpawnedObjects
                 .TryGetValue(targetNetworkObjectId, out NetworkObject target))
         {
             if (target.TryGetComponent<Health>(out var health))
-            {
-                health.TakeDamage(dmg);
-                Debug.Log($"[Shoot] Dégâts infligés à {target.name} : -{dmg} HP");
-            }
-            else
-            {
-                Debug.Log($"[Shoot] {target.name} n'a pas de composant Health !");
-            }
+                health.TakeDamage(dmg, OwnerClientId); // passe le killerId
         }
     }
 }
