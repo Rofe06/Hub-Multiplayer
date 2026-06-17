@@ -58,7 +58,7 @@ public class Scoreboard : MonoBehaviour
         // Force la taille du RowContainer
         RectTransform containerRect = rowContainer.GetComponent<RectTransform>();
         RectTransform panelRect = scoreboardPanel.GetComponent<RectTransform>();
-        containerRect.sizeDelta = new Vector2(700f, 400f);
+        containerRect.sizeDelta = new Vector2(0f, 400f);
 
         foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
@@ -68,7 +68,7 @@ public class Scoreboard : MonoBehaviour
 
             // Force la largeur de chaque ligne
             RectTransform rowRect = rowGO.GetComponent<RectTransform>();
-            rowRect.sizeDelta = new Vector2(700f, 40f);
+            rowRect.sizeDelta = new Vector2(0f, 40f);
 
             var row = rowGO.GetComponent<ScoreboardRow>();
             row.Setup(stats, netObj.IsOwner);
