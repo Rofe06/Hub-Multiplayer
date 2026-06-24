@@ -105,6 +105,24 @@ public class MainMenu : MonoBehaviour
         };
     }
 
+    void Update()
+    {
+        // Sécurité : si une session réseau est active (host ou client),
+        // force le menu à rester caché — corrige le cas où la synchronisation
+        // de scène côté client réinitialise l'état du menu après un Join
+        if (Unity.Netcode.NetworkManager.Singleton != null &&
+            (Unity.Netcode.NetworkManager.Singleton.IsConnectedClient ||
+             Unity.Netcode.NetworkManager.Singleton.IsServer))
+        {
+            if (_menuActive)
+            {
+                _menuActive = false;
+                if (networkButtonUI != null)
+                    networkButtonUI.SetActive(false);
+            }
+        }
+    }
+
     void OnGUI()
     {
         if (!_menuActive) return;
