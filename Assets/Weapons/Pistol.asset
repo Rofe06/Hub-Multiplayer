@@ -19,6 +19,9 @@ MonoBehaviour:
   isAutomatic: 0
   pelletsCount: 1
   spreadAngle: 0
+  magazineSize: 12
+  maxReserve: 90
+  reloadTime: 1.2
   weaponModelPrefab: {fileID: 919132149155446097, guid: aa743d260e3bb6741bde13436e889848, type: 3}
   modelPositionOffset: {x: 0.04, y: -0.05, z: 0.08}
   modelRotationOffset: {x: -89, y: 324, z: -234}

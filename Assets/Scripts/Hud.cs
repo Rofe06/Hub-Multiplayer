@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode;
@@ -9,32 +9,54 @@ public class HUD : MonoBehaviour
     public Image healthBarFill;
     public TMP_Text healthText;
 
+    [Header("Munitions")]
+    public TMP_Text ammoText; // affiche "12 / 60"
+
     [Header("Feedback mort")]
     public GameObject deathPanel;
 
     private Health _health;
+    private WeaponManager _weaponManager;
     private bool _initialized = false;
 
     void Update()
     {
-        // Cherche le joueur local à chaque frame jusqu'à ce qu'il soit trouvé
         if (_initialized) return;
         if (NetworkManager.Singleton == null) return;
         if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost) return;
 
         foreach (var netObj in NetworkManager.Singleton.SpawnManager.SpawnedObjectsList)
         {
-            if (netObj.IsOwner && netObj.TryGetComponent<Health>(out var health))
+            if (!netObj.IsOwner) continue;
+
+            if (netObj.TryGetComponent<Health>(out var health))
             {
                 _health = health;
                 _health.OnHealthChanged += UpdateHealth;
                 _health.OnDeath += ShowDeathPanel;
-
                 UpdateHealth(_health.CurrentHealth, _health.maxHealth);
+            }
+
+            if (netObj.TryGetComponent<WeaponManager>(out var weaponManager))
+            {
+                _weaponManager = weaponManager;
+                _weaponManager.OnAmmoChanged += UpdateAmmo;
+                UpdateAmmo(); // affichage initial
+            }
+
+            if (_health != null && _weaponManager != null)
+            {
                 _initialized = true;
                 break;
             }
         }
+    }
+
+    void LateUpdate()
+    {
+        // Met Ã  jour les munitions en continu pour reflÃ©ter le rechargement en cours
+        if (_weaponManager != null)
+            UpdateAmmo();
     }
 
     private void OnDestroy()
@@ -44,6 +66,9 @@ public class HUD : MonoBehaviour
             _health.OnHealthChanged -= UpdateHealth;
             _health.OnDeath -= ShowDeathPanel;
         }
+
+        if (_weaponManager != null)
+            _weaponManager.OnAmmoChanged -= UpdateAmmo;
     }
 
     private void UpdateHealth(float current, float max)
@@ -56,6 +81,24 @@ public class HUD : MonoBehaviour
 
         if (current > 0f && deathPanel != null)
             deathPanel.SetActive(false);
+    }
+
+    private void UpdateAmmo()
+    {
+        if (ammoText == null || _weaponManager == null) return;
+
+        if (_weaponManager.IsReloading)
+        {
+            ammoText.text = "Rechargement...";
+        }
+        else
+        {
+            string reserveDisplay = _weaponManager.CurrentWeapon.infiniteReserve
+                ? "âˆž"
+                : _weaponManager.CurrentReserve.ToString();
+
+            ammoText.text = $"{_weaponManager.CurrentAmmoInMag} / {reserveDisplay}";
+        }
     }
 
     private void ShowDeathPanel()

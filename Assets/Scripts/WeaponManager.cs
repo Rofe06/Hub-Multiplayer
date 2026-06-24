@@ -9,16 +9,38 @@ public class WeaponManager : NetworkBehaviour
 
     [Header("Références")]
     public Camera fpsCam;
-    public Transform weaponHoldPoint; // emplacement où accrocher le modèle 3D
+    public Transform weaponHoldPoint;
 
     private int _currentWeaponIndex = 0;
     private float _nextFireTime = 0f;
     private GameObject _currentWeaponInstance;
 
+    // ── Munitions par arme (indexé comme le tableau weapons) ───────────────────
+    private int[] _currentAmmoInMag;   // munitions dans le chargeur actuel
+    private int[] _currentReserve;     // munitions en réserve
+    private bool _isReloading = false;
+    private float _reloadEndTime = 0f;
+
     public WeaponData CurrentWeapon => weapons[_currentWeaponIndex];
+    public int CurrentAmmoInMag => _currentAmmoInMag[_currentWeaponIndex];
+    public int CurrentReserve => _currentReserve[_currentWeaponIndex];
+    public bool IsReloading => _isReloading;
+
+    // Event pour le HUD
+    public event System.Action OnAmmoChanged;
 
     void Start()
     {
+        // Initialise les munitions au max pour chaque arme
+        _currentAmmoInMag = new int[weapons.Length];
+        _currentReserve = new int[weapons.Length];
+
+        for (int i = 0; i < weapons.Length; i++)
+        {
+            _currentAmmoInMag[i] = weapons[i].magazineSize;
+            _currentReserve[i] = weapons[i].maxReserve;
+        }
+
         UpdateWeaponVisual();
     }
 
@@ -29,11 +51,21 @@ public class WeaponManager : NetworkBehaviour
         float scroll = value.Get<float>();
         if (Mathf.Approximately(scroll, 0f)) return;
 
+        // Annule un rechargement en cours si on change d'arme
+        _isReloading = false;
+
         int direction = scroll > 0 ? 1 : -1;
         _currentWeaponIndex = (_currentWeaponIndex + direction + weapons.Length) % weapons.Length;
 
         UpdateWeaponVisual();
-        Debug.Log($"[Weapon] Arme actuelle : {CurrentWeapon.weaponName}");
+        OnAmmoChanged?.Invoke();
+    }
+
+    // ── Callback touche R ────────────────────────────────────────────────────
+    public void OnReload(InputValue value)
+    {
+        if (!IsOwner || !value.isPressed) return;
+        TryStartReload();
     }
 
     public void OnAttack(InputValue value)
@@ -44,10 +76,9 @@ public class WeaponManager : NetworkBehaviour
         {
             _holdingFire = value.isPressed;
         }
-        else if (value.isPressed && Time.time >= _nextFireTime)
+        else if (value.isPressed)
         {
-            _nextFireTime = Time.time + CurrentWeapon.fireRate;
-            Shoot();
+            TryShoot();
         }
     }
 
@@ -57,65 +88,83 @@ public class WeaponManager : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (CurrentWeapon.isAutomatic && _holdingFire && Time.time >= _nextFireTime)
+        // Tir automatique
+        if (CurrentWeapon.isAutomatic && _holdingFire)
+            TryShoot();
+
+        // Fin du rechargement
+        if (_isReloading && Time.time >= _reloadEndTime)
+            FinishReload();
+    }
+
+    // ── Tentative de tir : vérifie munitions + cooldown ────────────────────────
+    private void TryShoot()
+    {
+        if (_isReloading) return;
+        if (Time.time < _nextFireTime) return;
+
+        // Plus de munitions dans le chargeur → rechargement auto
+        if (CurrentAmmoInMag <= 0)
         {
-            _nextFireTime = Time.time + CurrentWeapon.fireRate;
-            Shoot();
+            TryStartReload();
+            return;
         }
+
+        _nextFireTime = Time.time + CurrentWeapon.fireRate;
+        _currentAmmoInMag[_currentWeaponIndex]--;
+        OnAmmoChanged?.Invoke();
+
+        Shoot();
+    }
+
+    // ── Lance un rechargement si possible ────────────────────────────────────
+    private void TryStartReload()
+    {
+        if (_isReloading) return;
+        if (CurrentAmmoInMag >= CurrentWeapon.magazineSize) return; // déjà plein
+        if (!CurrentWeapon.infiniteReserve && CurrentReserve <= 0) return; // plus de munitions en réserve
+
+        _isReloading = true;
+        _reloadEndTime = Time.time + CurrentWeapon.reloadTime;
+
+        Debug.Log($"[Weapon] Rechargement de {CurrentWeapon.weaponName}...");
+    }
+
+    private void FinishReload()
+    {
+        _isReloading = false;
+
+        int needed = CurrentWeapon.magazineSize - CurrentAmmoInMag;
+
+        if (CurrentWeapon.infiniteReserve)
+        {
+            // Réserve infinie : remplit le chargeur sans jamais la diminuer
+            _currentAmmoInMag[_currentWeaponIndex] += needed;
+        }
+        else
+        {
+            int taken = Mathf.Min(needed, CurrentReserve);
+            _currentAmmoInMag[_currentWeaponIndex] += taken;
+            _currentReserve[_currentWeaponIndex] -= taken;
+        }
+
+        OnAmmoChanged?.Invoke();
+        Debug.Log($"[Weapon] Rechargement terminé : {CurrentAmmoInMag}/{CurrentWeapon.magazineSize} (réserve: {CurrentReserve})");
     }
 
     // ── Change le modèle 3D affiché selon l'arme active ────────────────────────
     private void UpdateWeaponVisual()
     {
-        Debug.Log($"[Weapon] === UpdateWeaponVisual appelé === IsOwner: {IsOwner}");
-
-        // Détruit l'ancien modèle affiché
         if (_currentWeaponInstance != null)
-        {
-            Debug.Log($"[Weapon] Destruction de l'ancien modèle: {_currentWeaponInstance.name}");
             Destroy(_currentWeaponInstance);
-        }
 
-        if (weaponHoldPoint == null)
-        {
-            Debug.LogWarning("[Weapon] weaponHoldPoint est NULL ! Assigne-le dans l'Inspector.");
+        if (weaponHoldPoint == null || CurrentWeapon.weaponModelPrefab == null)
             return;
-        }
 
-        if (CurrentWeapon.weaponModelPrefab == null)
-        {
-            Debug.LogWarning($"[Weapon] weaponModelPrefab est NULL pour l'arme {CurrentWeapon.weaponName} !");
-            return;
-        }
-
-        Debug.Log($"[Weapon] holdPoint chemin complet: {GetFullPath(weaponHoldPoint)} | childCount avant: {weaponHoldPoint.childCount}");
-
-        // Instancie le nouveau modèle comme enfant du point d'accroche
-        _currentWeaponInstance = Instantiate(
-            CurrentWeapon.weaponModelPrefab,
-            weaponHoldPoint
-        );
-
+        _currentWeaponInstance = Instantiate(CurrentWeapon.weaponModelPrefab, weaponHoldPoint);
         _currentWeaponInstance.transform.localPosition = CurrentWeapon.modelPositionOffset;
         _currentWeaponInstance.transform.localRotation = Quaternion.Euler(CurrentWeapon.modelRotationOffset);
         _currentWeaponInstance.transform.localScale = CurrentWeapon.modelScale;
-
-        Debug.Log($"[Weapon] Modèle instancié: {_currentWeaponInstance.name} | " +
-                  $"Active: {_currentWeaponInstance.activeSelf} | " +
-                  $"World Position: {_currentWeaponInstance.transform.position} | " +
-                  $"childCount après: {weaponHoldPoint.childCount} | " +
-                  $"chemin complet de l'instance: {GetFullPath(_currentWeaponInstance.transform)}");
-    }
-
-    private string GetFullPath(Transform t)
-    {
-        string path = t.name;
-        while (t.parent != null)
-        {
-            t = t.parent;
-            path = t.name + "/" + path;
-        }
-        return path;
     }
 
     // ── Tir avec gestion multi-pellets (shotgun) ───────────────────────────────

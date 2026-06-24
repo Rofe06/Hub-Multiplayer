@@ -19,6 +19,12 @@ public class WeaponData : ScriptableObject
     public int pelletsCount = 1;    // 1 pour pistolet/sniper, ~8 pour shotgun
     public float spreadAngle = 0f;   // dispersion en degrés (0 = précis)
 
+    [Header("Munitions")]
+    public int magazineSize = 12;  // taille du chargeur
+    public int maxReserve = 90;  // munitions totales en réserve (hors chargeur)
+    public float reloadTime = 1.5f; // durée du rechargement en secondes
+    public bool infiniteReserve = false; // true = jamais à court de munitions (arme de base)
+
     [Header("Visuel — Modèle 3D")]
     public GameObject weaponModelPrefab;            // le modèle FBX/OBJ importé
     public Vector3 modelPositionOffset = Vector3.zero; // ajustement fin de position

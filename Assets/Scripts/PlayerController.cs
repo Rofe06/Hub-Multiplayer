@@ -4,9 +4,6 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : NetworkBehaviour
 {
-    [Header("Caméra")]
-    [SerializeField] private float mouseSensitivity = 2f;
-
     private Camera _camera;
     private float _xRotation = 0f;
     private Vector2 _lookInput;
@@ -31,6 +28,10 @@ public class PlayerController : NetworkBehaviour
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            // Cache le corps du joueur pour lui-même (vue FPS)
+            if (TryGetComponent<MeshRenderer>(out var bodyRenderer))
+                bodyRenderer.enabled = false;
         }
         else
         {
@@ -51,8 +52,11 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleLook()
     {
-        float mouseX = _lookInput.x * mouseSensitivity;
-        float mouseY = _lookInput.y * mouseSensitivity;
+        // Lit la sensibilité depuis les Options du menu, modifiable en temps réel
+        float sensitivity = GameSettings.MouseSensitivity;
+
+        float mouseX = _lookInput.x * sensitivity;
+        float mouseY = _lookInput.y * sensitivity;
 
         _xRotation = Mathf.Clamp(_xRotation - mouseY, -90f, 90f);
         _camera.transform.localRotation = Quaternion.Euler(_xRotation, 0f, 0f);
