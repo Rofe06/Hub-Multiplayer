@@ -6,7 +6,7 @@ public class MainMenu : MonoBehaviour
     public GameObject networkButtonUI; // le panel Host/Join existant, désactivé par défaut
 
     // ── État ─────────────────────────────────────────────────────────────────
-    private enum MenuState { Title, Options }
+    private enum MenuState { Title, GameMode, Options }
     private MenuState _state = MenuState.Title;
 
     private bool _menuActive = true; // tant que true, on affiche ce menu
@@ -14,23 +14,25 @@ public class MainMenu : MonoBehaviour
     // ── Styles (même langage visuel que NetworkButtonUI) ───────────────────────
     private GUIStyle _panelStyle;
     private GUIStyle _btnStyle;
+    private GUIStyle _btnSelectedStyle;
     private GUIStyle _titleStyle;
     private GUIStyle _subtitleStyle;
     private GUIStyle _labelStyle;
     private GUIStyle _sliderLabelStyle;
 
-    private Texture2D _panelTex, _btnNormal, _btnHover, _btnActive, _accentTex;
+    private Texture2D _panelTex, _btnNormal, _btnHover, _btnActive, _accentTex, _btnSelectedTex;
     private bool _stylesInitialised;
 
-    private const float PanelW = 360f;
-    private const float PanelH = 420f;
-    private const float BtnW = 260f;
-    private const float BtnH = 50f;
+    private const float PanelW = 380f;
+    private const float PanelH = 480f;
+    private const float BtnW = 280f;
+    private const float BtnH = 48f;
 
     private static readonly Color ColPanel = new Color(0.05f, 0.07f, 0.12f, 0.97f);
     private static readonly Color ColBtnNorm = new Color(0.10f, 0.14f, 0.22f, 1f);
     private static readonly Color ColBtnHov = new Color(0.06f, 0.55f, 0.72f, 1f);
     private static readonly Color ColBtnAct = new Color(0.04f, 0.40f, 0.55f, 1f);
+    private static readonly Color ColBtnSelected = new Color(0.06f, 0.45f, 0.60f, 1f);
     private static readonly Color ColAccent = new Color(0.06f, 0.65f, 0.85f, 1f);
     private static readonly Color ColTextNorm = new Color(0.78f, 0.85f, 0.95f, 1f);
 
@@ -39,7 +41,6 @@ public class MainMenu : MonoBehaviour
 
     void Awake()
     {
-        // Charge les valeurs sauvegardées dans des champs temporaires éditables
         _tempSensitivity = GameSettings.MouseSensitivity;
         _tempVolume = GameSettings.Volume;
         GameSettings.ApplySavedSettings();
@@ -58,6 +59,7 @@ public class MainMenu : MonoBehaviour
         _btnHover = MakeTex(ColBtnHov);
         _btnActive = MakeTex(ColBtnAct);
         _accentTex = MakeTex(ColAccent);
+        _btnSelectedTex = MakeTex(ColBtnSelected);
 
         _panelStyle = new GUIStyle(GUI.skin.box)
         {
@@ -67,7 +69,7 @@ public class MainMenu : MonoBehaviour
 
         _titleStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 30,
+            fontSize = 28,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleCenter,
             normal = { textColor = ColAccent },
@@ -82,13 +84,18 @@ public class MainMenu : MonoBehaviour
 
         _btnStyle = new GUIStyle(GUI.skin.button)
         {
-            fontSize = 15,
+            fontSize = 14,
             fontStyle = FontStyle.Bold,
             alignment = TextAnchor.MiddleCenter,
             border = new RectOffset(6, 6, 6, 6),
             normal = { background = _btnNormal, textColor = ColTextNorm },
             hover = { background = _btnHover, textColor = Color.white },
             active = { background = _btnActive, textColor = Color.white },
+        };
+
+        _btnSelectedStyle = new GUIStyle(_btnStyle)
+        {
+            normal = { background = _btnSelectedTex, textColor = Color.white },
         };
 
         _labelStyle = new GUIStyle(GUI.skin.label)
@@ -136,10 +143,12 @@ public class MainMenu : MonoBehaviour
         GUI.Box(new Rect(px, py, PanelW, 3f), GUIContent.none,
                 new GUIStyle { normal = { background = _accentTex } });
 
-        if (_state == MenuState.Title)
-            DrawTitleScreen(px, py);
-        else
-            DrawOptionsScreen(px, py);
+        switch (_state)
+        {
+            case MenuState.Title: DrawTitleScreen(px, py); break;
+            case MenuState.GameMode: DrawGameModeScreen(px, py); break;
+            case MenuState.Options: DrawOptionsScreen(px, py); break;
+        }
     }
 
     // ── Écran titre ──────────────────────────────────────────────────────────
@@ -150,6 +159,7 @@ public class MainMenu : MonoBehaviour
 
         float btnX = px + (PanelW - BtnW) * 0.5f;
         float btnY = py + 150f;
+        float step = BtnH + 16f;
 
         if (GUI.Button(new Rect(btnX, btnY, BtnW, BtnH), "⬡  JOUER", _btnStyle))
         {
@@ -158,15 +168,83 @@ public class MainMenu : MonoBehaviour
                 networkButtonUI.SetActive(true);
         }
 
-        if (GUI.Button(new Rect(btnX, btnY + BtnH + 16f, BtnW, BtnH), "⬡  OPTIONS", _btnStyle))
-        {
+        btnY += step;
+        if (GUI.Button(new Rect(btnX, btnY, BtnW, BtnH), "⬡  MODE DE JEU", _btnStyle))
+            _state = MenuState.GameMode;
+
+        btnY += step;
+        if (GUI.Button(new Rect(btnX, btnY, BtnW, BtnH), "⬡  OPTIONS", _btnStyle))
             _state = MenuState.Options;
+
+        btnY += step;
+        if (GUI.Button(new Rect(btnX, btnY, BtnW, BtnH), "⬡  QUITTER", _btnStyle))
+            Application.Quit();
+    }
+
+    // ── Écran mode de jeu ────────────────────────────────────────────────────
+    private void DrawGameModeScreen(float px, float py)
+    {
+        GUI.Label(new Rect(px, py + 24f, PanelW, 30f), "MODE DE JEU", _titleStyle);
+        GUI.Label(new Rect(px, py + 56f, PanelW, 18f),
+                  "(Pris en compte uniquement si vous hébergez)", _subtitleStyle);
+
+        float sideMargin = 40f;
+        float contentW = PanelW - sideMargin * 2f;
+        float btnX = px + (PanelW - BtnW) * 0.5f;
+
+        // ── Choix du mode ──
+        float modeY = py + 100f;
+        float halfW = (BtnW - 8f) * 0.5f;
+
+        bool isKillMode = GameModeSettings.SelectedMode == GameMode.KillCount;
+        bool isTimeMode = GameModeSettings.SelectedMode == GameMode.TimeLimit;
+
+        if (GUI.Button(new Rect(btnX, modeY, halfW, BtnH),
+                "⬡  KILLS", isKillMode ? _btnSelectedStyle : _btnStyle))
+            GameModeSettings.SelectedMode = GameMode.KillCount;
+
+        if (GUI.Button(new Rect(btnX + halfW + 8f, modeY, halfW, BtnH),
+                "⬡  TEMPS", isTimeMode ? _btnSelectedStyle : _btnStyle))
+            GameModeSettings.SelectedMode = GameMode.TimeLimit;
+
+        // ── Réglage de la cible selon le mode ──
+        float settingY = modeY + BtnH + 40f;
+
+        if (isKillMode)
+        {
+            GUI.Label(new Rect(px + sideMargin, settingY, contentW, 24f),
+                      $"Kills pour gagner : {GameModeSettings.KillTarget}", _labelStyle);
+
+            DrawStepper(px, settingY + 30f, contentW,
+                () => GameModeSettings.KillTarget = Mathf.Max(1, GameModeSettings.KillTarget - 1),
+                () => GameModeSettings.KillTarget += 1);
+        }
+        else
+        {
+            GUI.Label(new Rect(px + sideMargin, settingY, contentW, 24f),
+                      $"Durée de la partie : {GameModeSettings.TimeLimitMinutes:F0} min", _labelStyle);
+
+            DrawStepper(px, settingY + 30f, contentW,
+                () => GameModeSettings.TimeLimitMinutes = Mathf.Max(1f, GameModeSettings.TimeLimitMinutes - 1f),
+                () => GameModeSettings.TimeLimitMinutes += 1f);
         }
 
-        if (GUI.Button(new Rect(btnX, btnY + (BtnH + 16f) * 2, BtnW, BtnH), "⬡  QUITTER", _btnStyle))
-        {
-            Application.Quit();
-        }
+        // ── Retour ──
+        if (GUI.Button(new Rect(btnX, py + PanelH - 70f, BtnW, BtnH), "⬡  RETOUR", _btnStyle))
+            _state = MenuState.Title;
+    }
+
+    // Petit composant +/- réutilisable
+    private void DrawStepper(float px, float y, float contentW, System.Action onMinus, System.Action onPlus)
+    {
+        float sideMargin = 40f;
+        float btnSize = 40f;
+
+        if (GUI.Button(new Rect(px + sideMargin, y, btnSize, btnSize), "-", _btnStyle))
+            onMinus.Invoke();
+
+        if (GUI.Button(new Rect(px + sideMargin + contentW - btnSize, y, btnSize, btnSize), "+", _btnStyle))
+            onPlus.Invoke();
     }
 
     // ── Écran options ────────────────────────────────────────────────────────
@@ -178,7 +256,7 @@ public class MainMenu : MonoBehaviour
         float contentW = PanelW - sideMargin * 2f;
 
         // ── Sensibilité souris ──
-        float sensY = py + 110f;
+        float sensY = py + 120f;
         GUI.Label(new Rect(px + sideMargin, sensY, contentW, 20f), "Sensibilité souris", _labelStyle);
         _tempSensitivity = GUI.HorizontalSlider(
             new Rect(px + sideMargin, sensY + 24f, contentW - 50f, 20f),
@@ -197,7 +275,6 @@ public class MainMenu : MonoBehaviour
         GUI.Label(new Rect(px + sideMargin + contentW - 45f, volY + 22f, 45f, 20f),
                   $"{Mathf.RoundToInt(_tempVolume * 100f)}%", _sliderLabelStyle);
 
-        // Applique en temps réel pour feedback immédiat
         GameSettings.MouseSensitivity = _tempSensitivity;
         GameSettings.Volume = _tempVolume;
 
@@ -206,9 +283,7 @@ public class MainMenu : MonoBehaviour
         float btnY = py + PanelH - 80f;
 
         if (GUI.Button(new Rect(btnX, btnY, BtnW, BtnH), "⬡  RETOUR", _btnStyle))
-        {
             _state = MenuState.Title;
-        }
     }
 
     private static Texture2D MakeTex(Color col)

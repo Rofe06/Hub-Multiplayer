@@ -92,6 +92,7 @@ public class Health : NetworkBehaviour
     public void TakeDamage(float amount, ulong killerId = ulong.MaxValue)
     {
         if (!IsServer || IsDead) return;
+        if (GameManager.Instance != null && GameManager.Instance.MatchEnded.Value) return; // partie terminée
 
         _currentHealth.Value = Mathf.Max(0f, _currentHealth.Value - amount);
 
@@ -116,6 +117,9 @@ public class Health : NetworkBehaviour
                     netObj.TryGetComponent<PlayerStats>(out var killerStats))
                 {
                     killerStats.AddKill();
+
+                    // Notifie le GameManager pour vérifier la condition de victoire
+                    GameManager.Instance?.NotifyKill(killerId, killerStats.Kills.Value);
                     break;
                 }
             }
