@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c16bf3e67b261f54eaa0459576b03cd7, type: 3}
+  m_Name: Pistol
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  weaponName: Pistol
+  damage: 25
+  range: 100
+  fireRate: 0.2
+  isAutomatic: 0
+  pelletsCount: 1
+  spreadAngle: 0
+  weaponModelPrefab: {fileID: 919132149155446097, guid: aa743d260e3bb6741bde13436e889848, type: 3}
+  modelPositionOffset: {x: 0.04, y: -0.05, z: 0.08}
+  modelRotationOffset: {x: -89, y: 324, z: -234}
+  modelScale: {x: 500, y: 500, z: 500}
