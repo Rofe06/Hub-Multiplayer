@@ -5,6 +5,9 @@ public class MainMenu : MonoBehaviour
     [Header("Référence")]
     public GameObject networkButtonUI; // le panel Host/Join existant, désactivé par défaut
 
+    [Header("Apparence")]
+    public Texture2D backgroundImage; // image de fond statique (recommandé, évite tout souci de caméra)
+
     // ── État ─────────────────────────────────────────────────────────────────
     private enum MenuState { Title, GameMode, Options }
     private MenuState _state = MenuState.Title;
@@ -47,6 +50,26 @@ public class MainMenu : MonoBehaviour
 
         if (networkButtonUI != null)
             networkButtonUI.SetActive(false);
+
+        // Sécurité : garantit qu'une caméra rend la scène en arrière-plan
+        // (corrige le "No cameras rendering" après un retour au menu depuis une partie)
+        EnsureCameraActive();
+    }
+
+    private void EnsureCameraActive()
+    {
+        Camera cam = Camera.main;
+        if (cam == null)
+        {
+            GameObject camObj = GameObject.Find("Main Camera");
+            if (camObj != null) cam = camObj.GetComponent<Camera>();
+        }
+
+        if (cam != null)
+        {
+            cam.gameObject.SetActive(true);
+            cam.enabled = true;
+        }
     }
 
     private void InitStyles()
@@ -136,6 +159,12 @@ public class MainMenu : MonoBehaviour
 
         InitStyles();
 
+        // Fond d'écran statique : indépendant de tout état de caméra 3D,
+        // garantit un visuel propre peu importe ce qui s'est passé avant
+        if (backgroundImage != null)
+            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height),
+                             backgroundImage, ScaleMode.ScaleAndCrop);
+
         float px = (Screen.width - PanelW) * 0.5f;
         float py = (Screen.height - PanelH) * 0.5f;
 
@@ -154,8 +183,7 @@ public class MainMenu : MonoBehaviour
     // ── Écran titre ──────────────────────────────────────────────────────────
     private void DrawTitleScreen(float px, float py)
     {
-        GUI.Label(new Rect(px, py + 40f, PanelW, 40f), "⬡ FPS MULTIPLAYER", _titleStyle);
-        GUI.Label(new Rect(px, py + 80f, PanelW, 20f), "Projet Epitech — 2026", _subtitleStyle);
+        GUI.Label(new Rect(px, py + 40f, PanelW, 40f), "FPS MULTIPLAYER", _titleStyle);
 
         float btnX = px + (PanelW - BtnW) * 0.5f;
         float btnY = py + 150f;

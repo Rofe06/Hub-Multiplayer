@@ -210,6 +210,11 @@ public class EndScreen : MonoBehaviour
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.Shutdown();
 
+        // Cache immédiatement le Canvas de jeu (HUD, munitions, scoreboard...)
+        // pour éviter tout résidu visuel pendant la transition de scène
+        GameObject canvas = GameObject.Find("Canvas");
+        if (canvas != null) canvas.SetActive(false);
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 

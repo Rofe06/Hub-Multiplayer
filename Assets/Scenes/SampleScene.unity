@@ -6772,6 +6772,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   networkButtonUI: {fileID: 1964602097}
+  backgroundImage: {fileID: 2800000, guid: 6ad48cfee852c1244b5abb0876fb2c89, type: 3}
 --- !u!4 &1726586770
 Transform:
   m_ObjectHideFlags: 0
