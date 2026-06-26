@@ -27,3 +27,5 @@ MonoBehaviour:
   modelPositionOffset: {x: 0.04, y: -0.05, z: 0.08}
   modelRotationOffset: {x: -89, y: 324, z: -234}
   modelScale: {x: 500, y: 500, z: 500}
+  fireSound: {fileID: 8300000, guid: be8196473fbc86442b21a12c3d0c9d96, type: 3}
+  reloadSound: {fileID: 8300000, guid: baac152d2a5f71545b2792a39873bdfe, type: 3}

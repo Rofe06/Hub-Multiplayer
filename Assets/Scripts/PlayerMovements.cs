@@ -9,14 +9,21 @@ public class PlayerMovements : NetworkBehaviour
     public float sprintSpeed = 10f;
 
     [Header("Saut & Gravité")]
-    public float jumpHeight = 2f;
-    public float gravity = -50f;
-    public float fallMultiplier = 10f;
+    public float jumpHeight = 1.4f;
+    public float gravity = -100f;
+    public float fallMultiplier = 42f;
 
     [Header("Détection du sol")]
     public Transform groundCheck;
     public float groundDistance = 0.3f;
     public LayerMask groundMask;
+
+    [Header("Audio — Pas")]
+    public AudioClip[] footstepSounds;
+    public float stepInterval = 0.45f;
+    public float sprintStepInterval = 0.3f;
+
+    private float _footstepTimer = 0f;
 
     private CharacterController _cc;
     private Vector3 _velocity;
@@ -24,7 +31,7 @@ public class PlayerMovements : NetworkBehaviour
 
     private readonly NetworkVariable<Color> _playerColor =
         new NetworkVariable<Color>(
-            Color.red,
+            Color.white,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
         );
@@ -35,9 +42,7 @@ public class PlayerMovements : NetworkBehaviour
         _playerColor.OnValueChanged += OnColorChanged;
 
         if (IsServer)
-            _playerColor.Value = Color.red;
-        
-        OnColorChanged(_playerColor.Value, _playerColor.Value);
+            _playerColor.Value = IsOwner ? Color.cyan : Color.red;
 
         if (!IsOwner)
             enabled = false;
@@ -62,6 +67,7 @@ public class PlayerMovements : NetworkBehaviour
         HandleMovement();
         HandleJump();
         ApplyGravity();
+        HandleFootsteps();
     }
 
     private void HandleGroundCheck()
@@ -101,10 +107,51 @@ public class PlayerMovements : NetworkBehaviour
 
     private void ApplyGravity()
     {
-        float currentGravity = _velocity.y < 0f ? gravity * fallMultiplier : gravity;
+        float currentGravity = _velocity.y < 0f
+            ? gravity * fallMultiplier
+            : gravity;
 
         _velocity.y += currentGravity * Time.deltaTime;
         _cc.Move(_velocity * Time.deltaTime);
+    }
+
+    // ── Bruits de pas ────────────────────────────────────────────────────────
+    private void HandleFootsteps()
+    {
+        float h = Input.GetAxisRaw("Horizontal");
+        float v = Input.GetAxisRaw("Vertical");
+        bool inputMoving = Mathf.Abs(h) > 0.1f || Mathf.Abs(v) > 0.1f;
+
+        // Ne joue rien si on ne bouge pas ou qu'on n'est pas au sol,
+        // mais on NE remet PAS le timer à zéro pour éviter qu'un clignotement
+        // de _isGrounded ne redéclenche le son en boucle
+        if (!inputMoving || !_isGrounded)
+            return;
+
+        bool sprinting = Input.GetKey(KeyCode.LeftShift);
+        float interval = sprinting ? sprintStepInterval : stepInterval;
+
+        _footstepTimer -= Time.deltaTime;
+        if (_footstepTimer <= 0f)
+        {
+            _footstepTimer = interval;
+            PlayFootstepServerRpc();
+        }
+    }
+
+    [ServerRpc]
+    private void PlayFootstepServerRpc()
+    {
+        PlayFootstepClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayFootstepClientRpc()
+    {
+        if (footstepSounds == null || footstepSounds.Length == 0) return;
+
+        AudioClip clip = footstepSounds[Random.Range(0, footstepSounds.Length)];
+        AudioSource.PlayClipAtPoint(clip, transform.position, 0.6f); // un peu plus discret que les tirs
     }
 
     private void OnDrawGizmosSelected()

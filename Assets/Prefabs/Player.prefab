@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2981073272
+  GlobalObjectIdHash: 1330111932
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -252,6 +252,10 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 0
+  footstepSounds:
+  - {fileID: 8300000, guid: 65920194f552a644190102c3b8fb83fe, type: 3}
+  stepInterval: 0.45
+  sprintStepInterval: 0.2
 --- !u!114 &7919217244402581907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,7 +269,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   ShowTopMostFoldoutHeaderGroup: 1
-  mouseSensitivity: 2
 --- !u!143 &80865577648114954
 CharacterController:
   m_ObjectHideFlags: 0

@@ -127,6 +127,8 @@ public class WeaponManager : NetworkBehaviour
         _isReloading = true;
         _reloadEndTime = Time.time + CurrentWeapon.reloadTime;
 
+        PlayReloadSound();
+
         Debug.Log($"[Weapon] Rechargement de {CurrentWeapon.weaponName}...");
     }
 
@@ -172,6 +174,9 @@ public class WeaponManager : NetworkBehaviour
     {
         WeaponData weapon = CurrentWeapon;
 
+        // Joue le son de tir, synchronisé pour tous les joueurs
+        PlayFireSoundServerRpc();
+
         for (int i = 0; i < weapon.pelletsCount; i++)
         {
             Vector3 direction = GetSpreadDirection(weapon.spreadAngle);
@@ -185,6 +190,27 @@ public class WeaponManager : NetworkBehaviour
                 ShootServerRpc(targetId, weapon.damage);
             }
         }
+    }
+
+    // ── Son de tir : diffusé à tous les clients depuis le serveur ──────────────
+    [ServerRpc]
+    private void PlayFireSoundServerRpc()
+    {
+        PlayFireSoundClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayFireSoundClientRpc()
+    {
+        if (CurrentWeapon.fireSound == null || weaponHoldPoint == null) return;
+        AudioSource.PlayClipAtPoint(CurrentWeapon.fireSound, weaponHoldPoint.position);
+    }
+
+    // ── Son de rechargement : local suffit (peu critique pour les autres) ──────
+    private void PlayReloadSound()
+    {
+        if (CurrentWeapon.reloadSound == null || weaponHoldPoint == null) return;
+        AudioSource.PlayClipAtPoint(CurrentWeapon.reloadSound, weaponHoldPoint.position);
     }
 
     private Vector3 GetSpreadDirection(float spreadAngle)

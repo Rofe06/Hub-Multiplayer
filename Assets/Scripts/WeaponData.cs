@@ -30,4 +30,8 @@ public class WeaponData : ScriptableObject
     public Vector3 modelPositionOffset = Vector3.zero; // ajustement fin de position
     public Vector3 modelRotationOffset = Vector3.zero; // ajustement fin de rotation
     public Vector3 modelScale = Vector3.one;  // échelle du modèle
+
+    [Header("Audio")]
+    public AudioClip fireSound;   // son joué à chaque tir
+    public AudioClip reloadSound; // son joué au rechargement (optionnel)
 }
