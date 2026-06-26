@@ -52,6 +52,7 @@ GameObject:
   - component: {fileID: 4722096610954112412}
   - component: {fileID: 6481028185697171370}
   - component: {fileID: 432217669260136697}
+  - component: {fileID: -4803356602684806451}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -339,6 +340,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxHealth: 100
   respawnDelay: 3
+  _bonusSelectTime: 8
 --- !u!114 &6481028185697171370
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -444,6 +446,31 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1f178c213affe7e4ca33c205c93a7d78, type: 2}
   fpsCam: {fileID: 5115717848981317211}
   weaponHoldPoint: {fileID: 3662927447558542920}
+--- !u!114 &-4803356602684806451
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3070416039993043783}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a0086fad6aa0094f87c73f444ddf5af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBonuses
+  ShowTopMostFoldoutHeaderGroup: 1
+  SpeedMultiplier:
+    m_InternalValue: 1
+  DamageMultiplier:
+    m_InternalValue: 1
+  JumpMultiplier:
+    m_InternalValue: 1
+  RegenPerSecond:
+    m_InternalValue: 0
+  DamageReduction:
+    m_InternalValue: 0
+  BonusMaxHealth:
+    m_InternalValue: 0
 --- !u!1 &4272821579708530029
 GameObject:
   m_ObjectHideFlags: 0

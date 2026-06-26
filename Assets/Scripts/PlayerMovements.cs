@@ -29,6 +29,8 @@ public class PlayerMovements : NetworkBehaviour
     private Vector3 _velocity;
     private bool _isGrounded;
 
+    private PlayerBonuses _bonuses;
+
     private readonly NetworkVariable<Color> _playerColor =
         new NetworkVariable<Color>(
             Color.white,
@@ -39,10 +41,14 @@ public class PlayerMovements : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         _cc = GetComponent<CharacterController>();
+        _bonuses = GetComponent<PlayerBonuses>();
+
         _playerColor.OnValueChanged += OnColorChanged;
 
         if (IsServer)
             _playerColor.Value = IsOwner ? Color.cyan : Color.red;
+
+        OnColorChanged(_playerColor.Value, _playerColor.Value);
 
         if (!IsOwner)
             enabled = false;
@@ -89,7 +95,12 @@ public class PlayerMovements : NetworkBehaviour
         float v = Input.GetAxisRaw("Vertical");
 
         bool isSprinting = Input.GetKey(KeyCode.LeftShift);
-        float currentSpeed = isSprinting ? sprintSpeed : speed;
+
+        float speedMultiplier = _bonuses != null
+            ? _bonuses.SpeedMultiplier.Value
+            : 1f;
+
+        float currentSpeed = (isSprinting ? sprintSpeed : speed) * speedMultiplier;
 
         Vector3 move = (transform.right * h + transform.forward * v).normalized;
         _cc.Move(move * currentSpeed * Time.deltaTime);
@@ -97,12 +108,18 @@ public class PlayerMovements : NetworkBehaviour
 
     private void HandleJump()
     {
-        // _velocity.y > 0 = on est en train de monter = on vient de sauter
-        // Cette condition est le vrai verrou anti-saut infini
         bool canJump = _isGrounded && _velocity.y <= 0f;
 
         if (Input.GetKeyDown(KeyCode.Space) && canJump)
-            _velocity.y = Mathf.Sqrt(2f * Mathf.Abs(gravity) * jumpHeight);
+        {
+            float jumpMultiplier = _bonuses != null
+                ? _bonuses.JumpMultiplier.Value
+                : 1f;
+
+            _velocity.y = Mathf.Sqrt(
+                2f * Mathf.Abs(gravity) * (jumpHeight * jumpMultiplier)
+            );
+        }
     }
 
     private void ApplyGravity()
