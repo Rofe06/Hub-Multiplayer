@@ -154,6 +154,7 @@ public class Health : NetworkBehaviour
         // ── Sélection de bonus ───────────────────────────────────────────────
         _waitingForBonus = true;
         BonusType[] choices = BonusDatabase.GetRandom(3);
+        Debug.Log($"[Health] Appel ShowBonusSelectionClientRpc avec {choices[0]}, {choices[1]}, {choices[2]}");
         ShowBonusSelectionClientRpc(choices[0], choices[1], choices[2], _bonusSelectTime);
 
         // Attend la réponse du joueur ou le timeout
@@ -187,7 +188,9 @@ public class Health : NetworkBehaviour
     [ClientRpc]
     private void ShowBonusSelectionClientRpc(BonusType b1, BonusType b2, BonusType b3, float timeLimit)
     {
+        Debug.Log($"[Health] RPC reçue côté client ! IsOwner: {IsOwner}");
         if (!IsOwner) return;
+        Debug.Log($"[Health] BonusSelectionUI.Instance est null ? {BonusSelectionUI.Instance == null}");
         BonusSelectionUI.Instance?.Show(b1, b2, b3, OnBonusChosen, timeLimit);
     }
 
